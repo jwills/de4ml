@@ -1,0 +1,17 @@
+*~
+*.egg-info/
+dist/
+.idea/
+coverage/
+__pycache__
+*.DS_Store
+.vscode
+.history
+.pytest_cache
+*.pyc
+.coverage
+results
+coverage.xml
+summary.txt
+.venv
+.*.sw?
