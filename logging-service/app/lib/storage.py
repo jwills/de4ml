@@ -1,7 +1,7 @@
 import abc
 import collections
 import itertools
-from typing import List
+from typing import List, Optional
 
 from . import contracts
 
@@ -17,7 +17,9 @@ class Store(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
-    def fetch(self, start: int, limit: int) -> List[contracts.Envelope]:
+    def fetch(
+        self, log_type: Optional[contracts.LogType], start: int, limit: int
+    ) -> List[contracts.Envelope]:
         ...
 
 
@@ -30,5 +32,11 @@ class InMemoryStore(Store):
     def write(self, log_record: contracts.Envelope):
         self._logs.appendleft(log_record)
 
-    def fetch(self, start: int, limit: int) -> List[contracts.Envelope]:
-        return list(itertools.islice(self._logs, start, limit))
+    def fetch(
+        self, log_type: Optional[contracts.LogType], start: int, limit: int
+    ) -> List[contracts.Envelope]:
+        if log_type is None:
+            return list(itertools.islice(self._logs, start, limit))
+        else:
+            matches = [log for log in self._logs if log.log_type == log_type]
+            return list(itertools.islice(matches, start, limit))

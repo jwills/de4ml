@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from fastapi import BackgroundTasks, FastAPI
 
 from .lib import contracts, storage
@@ -33,9 +33,11 @@ def log_click(body: contracts.ClickLog, background_tasks: BackgroundTasks):
 
 
 @app.get("/fetch", response_model=List[contracts.Envelope])
-def fetch(start: int = 0, limit: int = 10):
+def fetch(
+    log_type: Optional[contracts.LogType] = None, start: int = 0, limit: int = 10
+):
     """Retrieves recently logged entries from the storage engine, useful for debugging."""
-    return store.fetch(start, limit)
+    return store.fetch(log_type, start, limit)
 
 
 @app.get("/")

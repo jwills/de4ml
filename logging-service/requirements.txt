@@ -1,1 +1,3 @@
 fastapi[all]
+pytest
+requests
