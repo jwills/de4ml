@@ -3,6 +3,7 @@
 dist/
 .idea/
 coverage/
+mzdata/
 __pycache__
 *.DS_Store
 .vscode

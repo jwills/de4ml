@@ -1,0 +1,4 @@
+fastapi[all]
+psycopg
+pytest
+requests

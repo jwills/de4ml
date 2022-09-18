@@ -1,0 +1,22 @@
+version: "3.9"
+services:
+  join-svc:
+    build: .
+    ports:
+      - 8080:8080
+    depends_on:
+      - materialized
+    environment:
+      - DSN=postgresql://materialize@materialized:6875/materialize
+      - EXP_UNIT_MS=10000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 1s
+      timeout: 1s
+      retries: 1
+  materialized:
+    image: materialize/materialized:v0.26.4
+    container_name: materialized
+    command: -w1
+    ports:
+      - 6875:6875
