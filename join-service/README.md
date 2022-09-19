@@ -104,7 +104,7 @@ be fixed and some additional features to be added, which I have listed below- if
 challenge, please fork the repo and make some changes, and if you're taking my data engineering class,
 I would be happy to review any PRs that you send my way!
 
-1. In the current implementation of the join service, the system will output _mulitple_
+1. In the current implementation of the join service, the system will output _multiple_
 records for each decision if multiple rewards show up during the delay period. Please
 change the definition of the materialized views so that only a single output record
 per decision is released, with its reward corresponding to the reward that arrived
