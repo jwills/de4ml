@@ -50,7 +50,7 @@ def init_app():
         )
 
         # Cleanup the joined_decisions MZ view so we can recreate it and its dependencies
-        # on restart (again, just for demo purposes here)
+        # on restart (again, just for dev purposes here, you wouldn't do this in prod)
         cur.execute("DROP VIEW IF EXISTS joined_decisions")
 
         # Define the windowed views of the decisions and rewards data sources;

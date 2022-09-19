@@ -26,11 +26,12 @@ of the reward for the agent. If no reward arrives during that window of time, th
 should still output the original decision, but set the reward to 0 for that record.
 
 The join service is especially interesting for streaming data processing engines because
-it's a use case in which time (specifically the passage of time between when a decision arrives at
-the service and when it needs to be emitted) is integral to the correct function of the overall
-system; the delay exists to ensure that the *Learn* component of the contextual bandit system is
-not confused by decisions that appear to be good at first, but actually have a negative payoff (e.g.,
-clickbait-y news stores from a recommendation service.)
+it's a use case in which time (specifically, the passage of time between when a decision arrives at
+the service and when it needs to be emitted) is integral to the correct function of the system;
+the time delay exists to ensure that the *Learn* component of the contextual bandit system is
+not misled by decisions that appear to be good at first, but actually have a negative payoff (e.g.,
+clickbait headlines for stories in a recommendation service, where a user is likely to click on the
+link but then quickly return to the original site.)
 
 ## Getting Up and Running
 
@@ -46,7 +47,7 @@ to build the local app and then start the system running on [http://localhost:80
 have everything up and running you will receive a JSON payload that says `{"ok": true}` from that endpoint.
 
 If you aren't a fan of Docker and are working on OS X or Linux, you can do a [local installation of Materialize](https://materialize.com/docs/install/)
-using OS X or Linux and run the `materialized` service on localhost by running `materialized --workers 1` in a shell. In a separate
+and run the `materialized` daemon on localhost by running `materialized --workers 1` in a shell. In a separate
 shell with a python virtualenv setup, you can then execute `pip install -r requirements.txt` to get the dependencies you need installed and
 then execute `bin/run.sh` to start the [FastAPI](https://fastapi.tiangolo.com/)-based service at [http://localhost:8080](http://localhost:8080).
 
@@ -98,10 +99,10 @@ by the join service app!
 
 This project provides a basic framing of a join service, but there are lots of things that
 should be added to it before we consider taking it to production, including wiring up a
-streaming engine like Kafka/Redpanda and setting up monitoring for both the join service app
-and Materialize. Additionally, here is one bug that needs to be fixed and one additional
-feature that needs to be added to the join service before it's ready for real-world use: if
-you're up for the challenge, please fork this repo and make these changes:
+streaming engine like Kafka/Redpanda and setting up monitoring with Prometheus for both the join service app and the Materialize database. Additionally, there are at least a couple of bugs to
+be fixed and some additional features to be added, which I have listed below- if you're for the
+challenge, please fork the repo and make some changes, and if you're taking my data engineering class,
+I would be happy to review any PRs that you send my way!
 
 1. In the current implementation of the join service, the system will output _mulitple_
 records for each decision if multiple rewards show up during the delay period. Please
