@@ -8,11 +8,12 @@ Microsoft, discovering a set of common failure patterns, and then designing thei
 as to eliminate the classes of failures that they ran into most often.
 
 This repo provides a simple (but still interesting and educational!) implementation of the
-_join service_ described in the paper. The purpose of the join service is to implement the
-*Log* component of the *Explore-Log-Learn-Deploy* system for contextual bandits; specifically,
-the join service needs to do the following:
+_join service_ described in the paper. Contextual bandits are online, learning systems - they dont just take in requests to make decisions, they take in feedback that alters the decisions they make
+in the future. The join service has the responsibility of delaying feedback to a standard time window (10s, in this example). This ensures the system doesnt suffer from bias due to variations in how long it takes for the feedback on the consequences of the action to arrive. It also sets an upper bound after which positive/negative feedback is ignored by the online learning component.
 
-1. Capture a specific _decision_ that was made by the contextual bandit service, including
+Specifically, the join service needs to implement the following spec:
+
+1. Capture a _decision_ that was made by the contextual bandit service, including
 a) the action the bandit decided to take, b) the probability of the chosen action being selected
 within the bandit's explore-exploit tradeoff model, and c) the context (a.k.a., features) that
 the bandit had access to when it was making this decision.
@@ -23,12 +24,12 @@ _reward_ that the bandit received as a result of the specific decision that was 
 that interval of time, it should be joined to an output record that should include all of the
 attributes of the decision (i.e., the action, the probability, and the context) along with the value
 of the reward for the agent. If no reward arrives during that window of time, then the join service
-should still output the original decision, but set the reward to 0 for that record.
+should still output the original decision, but set the reward for that decision to 0.
 
 The join service is especially interesting for streaming data processing engines because
 it's a use case in which time (specifically, the passage of time between when a decision arrives at
 the service and when it needs to be emitted) is integral to the correct function of the system;
-the time delay exists to ensure that the *Learn* component of the contextual bandit system is
+the time delay exists to ensure that the learning component of the contextual bandit system is
 not misled by decisions that appear to be good at first, but actually have a negative payoff (e.g.,
 clickbait headlines for stories in a recommendation service, where a user is likely to click on the
 link but then quickly return to the original site.)
