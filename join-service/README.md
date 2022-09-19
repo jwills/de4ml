@@ -105,6 +105,14 @@ be fixed and some additional features to be added, which I have listed below- if
 challenge, please fork the repo and make some changes, and if you're taking my data engineering class,
 I would be happy to review any PRs that you send my way!
 
+1. In real systems, it is often the case that there will be some business logic that
+is allowed to override the decision made by the contextual bandit under certain circumstances.
+Decisions that were overridden should _not_ be emitted by the decision service because
+they are providing false information to the Learn component about what actually occurred (i.e.,
+the reward that is associated with the decision does not correspond to the action that the
+bandit took.) Add an `/override_decision` endpoint to the join service which takes in the
+`decision_key` of the decision that was overridden and modify the SQL so that the
+that the overridden decision is filtered out of the `joined_decisions` materialized view.
 1. In the current implementation of the join service, the system will output _multiple_
 records for each decision if multiple rewards show up during the delay period. Please
 change the definition of the materialized views so that only a single output record
@@ -114,11 +122,5 @@ Additionally, note that a reward that has an `insert_ms` lower than the decision
 `insert_ms` will still appear in the `joined_decisions` output as long as the reward is available
 within the same delay window. Is this the correct behavior? Or should the logic here be adjusted
 in some way?
-1. In real systems, it is often the case that there will be some business logic that
-is allowed to override the decision made by the contextual bandit under certain circumstances.
-Decisions that were overridden should _not_ be emitted by the decision service because
-they are providing false information to the Learn component about what actually occurred (i.e.,
-the reward that is associated with the decision does not correspond to the action that the
-bandit took.) Add an `/override_decision` endpoint to the join service which takes in the
-`decision_key` of the decision that was overridden and modify the SQL so that the
-that the overridden decision is filtered out of the `joined_decisions` materialized view.
+1. See something else you would like to change? Can you come up with a more elegant/efficient
+way to implement the join service spec? Send me a PR, I'd love to see what you come up with!
