@@ -8,8 +8,8 @@ Microsoft, discovering a set of common failure patterns, and then designing thei
 as to eliminate the classes of failures that they ran into most often.
 
 This repo provides a simple (but still interesting and educational!) implementation of the
-_join service_ described in the paper. Contextual bandits are online, learning systems - they dont just take in requests to make decisions, they take in feedback that alters the decisions they make
-in the future. The join service has the responsibility of delaying feedback to a standard time window (10s, in this example). This ensures the system doesnt suffer from bias due to variations in how long it takes for the feedback on the consequences of the action to arrive. It also sets an upper bound after which positive/negative feedback is ignored by the online learning component.
+_join service_ described in the paper. Contextual bandits are online, learning systems - they don't just take in requests to make decisions, they take in feedback that alters the decisions they make
+in the future. The join service has the responsibility of delaying the feedback that is sent to the learning component to a standard time window (10s, in this example.) This ensures the system does'nt suffer from bias due to variations in how long it takes for the feedback on the consequences of the action to arrive. It also sets an upper bound after which positive/negative feedback is ignored by the online learning system.
 
 Specifically, the join service needs to implement the following spec:
 
