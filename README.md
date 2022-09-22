@@ -1,1 +1,1 @@
-Example projects to support the [Data Engineering for Machine Learning](https://www.getsphere.com/ml-engineering/data-engineering-for-machine-learning?source=de4ml-github) course on [Sphere](getsphere.com)
+Example projects to support the [Data Engineering for Machine Learning](https://www.getsphere.com/ml-engineering/data-engineering-for-machine-learning?source=de4ml-github) course on [Sphere](https://getsphere.com)
