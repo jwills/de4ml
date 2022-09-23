@@ -49,6 +49,17 @@ def init_app():
             """
         )
 
+        # Declare the overrides table for decisions that had a business logic
+        # override applied and should not be learned from
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS overrides (
+                key TEXT NOT NULL,
+                insert_ms NUMERIC NOT NULL
+            )
+            """
+        )
+
         # Cleanup the joined_decisions MZ view so we can recreate it and its dependencies
         # on restart (again, just for dev purposes here, you wouldn't do this in prod)
         cur.execute("DROP VIEW IF EXISTS joined_decisions")
@@ -74,10 +85,20 @@ def init_app():
             )
             """
         )
+        cur.execute(
+            f"""
+            CREATE OR REPLACE MATERIALIZED VIEW overrides_window AS (
+                SELECT *
+                FROM overrides
+                WHERE mz_logical_timestamp() BETWEEN insert_ms AND insert_ms + {exp_unit_ms}
+            )
+            """
+        )
 
         # Define the joined view of the decisions and their rewards; this a a LEFT JOIN
         # because we want to emit decisions that do not have a corresponding reward after
-        # the window has expired
+        # the window has expired; we also do a LEFT JOIN with the overrides table to
+        # filter out any decisions that had a business logic override applied
         cur.execute(
             f"""
             CREATE OR REPLACE MATERIALIZED VIEW joined_decisions AS (
@@ -90,7 +111,9 @@ def init_app():
                 , r.insert_ms - d.insert_ms as reward_delta_ms
                 FROM decisions_window d
                 LEFT JOIN rewards_window r ON d.key = r.key
+                LEFT JOIN overrides_window o ON d.key = o.key
                 WHERE mz_logical_timestamp() >= d.insert_ms + {exp_unit_ms}
+                AND o.key is NULL
             )
             """
         )
@@ -157,6 +180,16 @@ def log_reward(reward: Reward):
         cur.execute(
             f"INSERT INTO rewards (key, reward, insert_ms) VALUES (%s, %s, {INSERT_MS_SQL})",
             (reward.key, reward.reward),
+        )
+        return {"ok": True}
+
+
+@app.post("/log_override")
+def log_override(key: str):
+    with CONN.cursor() as cur:
+        cur.execute(
+            f"INSERT INTO overrides (key, insert_ms) VALUES (%s, {INSERT_MS_SQL})",
+            (key,),
         )
         return {"ok": True}
 

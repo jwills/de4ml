@@ -111,7 +111,7 @@ Decisions that were overridden should _not_ be emitted by the decision service b
 they are providing false information to the Learn component about what actually occurred (i.e.,
 the reward that is associated with the decision does not correspond to the action that the
 bandit took.) Add an `/override_decision` endpoint to the join service which takes in the
-`decision_key` of the decision that was overridden and modify the SQL so that the
+`key` of the decision that was overridden and modify the SQL so that the
 that the overridden decision is filtered out of the `joined_decisions` materialized view.
 1. In the current implementation of the join service, the system will output _multiple_
 records for each decision if multiple rewards show up during the delay period. Please
