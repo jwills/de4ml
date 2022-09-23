@@ -95,6 +95,20 @@ def init_app():
             """
         )
 
+        # Define a view that does a GROUP BY over the rewards_window materialized view
+        # to get the most recently occurring reward for each key if there are multiple
+        # rewards in the MZ view
+        cur.execute(
+            """
+            CREATE OR REPLACE VIEW most_recent_reward_in_window AS (
+                SELECT key
+                , MAX(insert_ms) AS insert_ms
+                , list_agg(reward ORDER BY insert_ms DESC)[1] AS reward
+                FROM rewards_window
+                GROUP BY key
+            )
+            """
+        )
         # Define the joined view of the decisions and their rewards; this a a LEFT JOIN
         # because we want to emit decisions that do not have a corresponding reward after
         # the window has expired; we also do a LEFT JOIN with the overrides table to
@@ -110,7 +124,7 @@ def init_app():
                 , d.insert_ms as decision_insert_ms
                 , r.insert_ms - d.insert_ms as reward_delta_ms
                 FROM decisions_window d
-                LEFT JOIN rewards_window r ON d.key = r.key
+                LEFT JOIN most_recent_reward_in_window r ON d.key = r.key
                 LEFT JOIN overrides_window o ON d.key = o.key
                 WHERE mz_logical_timestamp() >= d.insert_ms + {exp_unit_ms}
                 AND o.key is NULL
