@@ -1,0 +1,243 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "FastAPI",
+        "version": "0.1.0"
+    },
+    "paths": {
+        "/searches": {
+            "post": {
+                "summary": "Log Search Event",
+                "description": "Validates and persists a search log record to permanent storage.",
+                "operationId": "log_search_event_searches_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SearchEvent"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/clicks": {
+            "post": {
+                "summary": "Log Click Event",
+                "description": "Validates and persists a click log record to permanent storage.",
+                "operationId": "log_click_event_clicks_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ClickEvent"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/sql": {
+            "get": {
+                "summary": "Fetch",
+                "description": "Retrieves recently logged entries from the storage engine, useful for debugging.",
+                "operationId": "fetch_sql_get",
+                "parameters": [
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "Q",
+                            "type": "string"
+                        },
+                        "name": "q",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "title": "Response Fetch Sql Get",
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/": {
+            "get": {
+                "summary": "Is Healthy",
+                "description": "Basic health check endpoint that indicates the logging service is up and running.",
+                "operationId": "is_healthy__get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "ClickEvent": {
+                "title": "ClickEvent",
+                "required": [
+                    "query_id",
+                    "document_id"
+                ],
+                "type": "object",
+                "properties": {
+                    "timestamp_micros": {
+                        "title": "Timestamp Micros",
+                        "type": "integer"
+                    },
+                    "query_id": {
+                        "title": "Query Id",
+                        "type": "string"
+                    },
+                    "document_id": {
+                        "title": "Document Id",
+                        "type": "integer"
+                    }
+                },
+                "description": "Information we want to record about a user click event."
+            },
+            "SearchEvent": {
+                "title": "SearchEvent",
+                "required": [
+                    "user",
+                    "query_id",
+                    "raw_query"
+                ],
+                "type": "object",
+                "properties": {
+                    "timestamp_micros": {
+                        "title": "Timestamp Micros",
+                        "type": "integer"
+                    },
+                    "user": {
+                        "$ref": "#/components/schemas/User"
+                    },
+                    "query_id": {
+                        "title": "Query Id",
+                        "type": "string"
+                    },
+                    "raw_query": {
+                        "title": "Raw Query",
+                        "type": "string"
+                    },
+                    "results": {
+                        "title": "Results",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SearchResult"
+                        }
+                    }
+                },
+                "description": "The information we want to keep/analyze about a search event."
+            },
+            "SearchResult": {
+                "title": "SearchResult",
+                "required": [
+                    "document_id",
+                    "position",
+                    "score"
+                ],
+                "type": "object",
+                "properties": {
+                    "document_id": {
+                        "title": "Document Id",
+                        "type": "integer"
+                    },
+                    "position": {
+                        "title": "Position",
+                        "type": "integer"
+                    },
+                    "score": {
+                        "title": "Score",
+                        "type": "number"
+                    }
+                },
+                "description": "Minimalist search result info."
+            },
+            "User": {
+                "title": "User",
+                "required": [
+                    "id"
+                ],
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "title": "Id",
+                        "type": "integer"
+                    }
+                },
+                "description": "Minimalist user identifiers."
+            }
+        }
+    }
+}

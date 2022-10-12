@@ -1,3 +1,4 @@
+duckdb
 fastapi[all]
 pytest
 requests

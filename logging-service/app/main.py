@@ -1,43 +1,39 @@
-from typing import List, Optional
+import os
+from typing import Dict, List, Optional
+
 from fastapi import BackgroundTasks, FastAPI
 
 from .lib import contracts, storage
 
-# The backend storage system that we will persist the log records
-# to after they are received and validated.
-store = storage.get_store()
-
 # The FastAPI app instance
+working_dir = os.path.dirname(os.path.abspath(__file__))
+store = storage.Storage()
+init_sql_file = os.path.join(working_dir, "config", "init.sql")
+if os.path.exists(init_sql_file):
+    store.intialize(init_sql_file)
 app = FastAPI()
 
 
-def _write_log(log: contracts.Envelope):
-    """A helper method for persisting a log record to storage in a background task."""
-    store.write(log)
-
-
-@app.post("/search")
-def log_search(body: contracts.SearchLog, background_tasks: BackgroundTasks):
+@app.post("/searches")
+def log_search_event(body: contracts.SearchEvent, background_tasks: BackgroundTasks):
     """Validates and persists a search log record to permanent storage."""
-    envelope = contracts.Envelope(log_type=contracts.LogType.SEARCH, search=body)
-    background_tasks.add_task(_write_log, envelope)
+    background_tasks.add_task(store.write, "searches", body.dict())
     return {"ok": True}
 
 
-@app.post("/click")
-def log_click(body: contracts.ClickLog, background_tasks: BackgroundTasks):
+@app.post("/clicks")
+def log_click_event(body: contracts.ClickEvent, background_tasks: BackgroundTasks):
     """Validates and persists a click log record to permanent storage."""
-    envelope = contracts.Envelope(log_type=contracts.LogType.CLICK, click=body)
-    background_tasks.add_task(_write_log, envelope)
+    background_tasks.add_task(store.write, "clicks", body.dict())
     return {"ok": True}
 
 
-@app.get("/fetch", response_model=List[contracts.Envelope])
-def fetch(
-    log_type: Optional[contracts.LogType] = None, start: int = 0, limit: int = 10
-):
+@app.get("/sql", response_model=List[Dict])
+def fetch(q: str):
     """Retrieves recently logged entries from the storage engine, useful for debugging."""
-    return store.fetch(log_type, start, limit)
+    ret = store.query(q)
+    print(ret)
+    return ret
 
 
 @app.get("/")
