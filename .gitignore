@@ -15,4 +15,5 @@ results
 coverage.xml
 summary.txt
 .venv
+.toml
 .*.sw?
