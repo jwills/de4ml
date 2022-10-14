@@ -16,9 +16,17 @@ and the less impact that it will have on our business.*
 
 There are any number of ways that a logging service could be implemented, depending on what the rest
 of the production stack looked like at the company (e.g., the preferred programming language, schema
-definition tooling, monitoring/observability libraries, deployment models, etc.) The intent of this
-example project is to create a simple service that is comprehensible by a data/ML engineer who is
-comfortable in Python, but who may not have a ton of experience creating backend services.
+definition tooling, monitoring/observability libraries, deployment models, etc.) This repo contains
+an implementation of a service that solves all of the problems that you need to solve to do it:
+
+1. It defines an API using [FastAPI](https://fastapi.tiangolo.com/) and [Pydantic](https://pydantic-docs.helpmanual.io/)
+which specifies the records it knows how to log, what fields those records contain, and any validation
+rules for the values of those fields (types, required/optional, and any custom validation rules you
+can imagine.)
+2. It specifies a mapping between that API and the DDL needed to map those records into tables in a
+data warehouse, and rules for how you can evolve the API definitions and the DDL in tandem automatically.
+3. It includes unit testing to ensure that the data that is written to the API conforms to the validation
+rules and can tell you what is wrong with your input records.
 
 ## Getting Up and Running
 
@@ -39,41 +47,27 @@ in order to get things running locally [http://localhost:8080/](http://localhost
 
 ## Understanding the Code
 
-The logging service is built using the excellent [FastAPI](https://fastapi.tiangolo.com/) and
-makes extensive use of [Pydantic](https://pydantic-docs.helpmanual.io/) (which ships with FastAPI)
-to implement data validation and documentation. The code itself is defined in three files:
-
 
 1. `app/main.py`: The primary entrypoint for the service, where the API methods are defined
 and we do the work of validating the logged events and persisting them for storage.
-1. `app/lib/storage.py`: Defines the `Store` abstract base class, which includes a `write`
-method for persisting a logged event after it has been validated and a `fetch` method
-that can be used to retrieve recently logged events (which is very helpful during development
-and debugging.) The simple example here only keeps the logged events in memory, but we can
-create alternative implementations that serialize the events and persist them to a file, or 
-Kafka, or a database table.
+1. `app/lib/storage.py`: Defines the configuration and logic for persisting the records into
+a database- for demo purposes, we're simply inserting the denormalized records into [DuckDB](http://duckdb.org)
+running in-process and persisting the records to a file on disk so that they can be exported as
+Parquet files later on by a cronjob.
 1. `app/lib/contracts.py`: Defines the Pydantic models that we are using to define our data
 contracts as Python classes that can include rich documentation and complex validation
 logic for ensuring that the events that we receive always pass certain quality checks
 before we persist them to our data infrastructure.
+1. `migrate.py`: The tool that parses the APIs defined by the service and generates the DDL
+(including both CREATE TABLE and ALTER TABLE statements) necessary for DuckDB to ingest records;
+the generated DDL lives in `app/config/init.sql`.
+1. `test.py`: The unit tests, written using pytest and FastAPI's excellent testing libraries, that
+ensures that the records sent to the API are mapped correctly to the tables in DuckDB.
 
 ## Trying It Out
 
 You can examine and interact with the event logging endpoints by running the logging
 service and then navigating to [http://localhost:8080/docs](http://localhost:8080/docs) to
 see what happens when you send a request to log a search or a click (both with valid and
-invalid schemas) as well as fetch the logged results to see them wrapped inside of the
-`Envelope` structure which includes additional metadata added by the logging service itself.
-
-## Places To Go Next
-
-This project provides a basic framing of a logging service, but there are lots of things that
-should be added to it before we take it to production, including:
-
-1. Support for additional storage backends (like files, Kafka, or a database) and the ability to
-retry and/or persist logged records to a backup storage system in case the primary system is down,
-1. Monitoring (via [Prometheus](https://prometheus.io/) or another service) to capture metrics about
-the number of log events sent to each endpoint, the number of validation errors, etc., etc. to power
-alerting.
-1. Unit tests and the ability to verify that a code change preserves backwards-compatibility with the existing
-contract definitions.
+invalid schemas) as well as fetch the logged results by sending SQL queries to the `/sql`
+endpoint.
