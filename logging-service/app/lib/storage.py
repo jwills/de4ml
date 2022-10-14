@@ -1,6 +1,7 @@
 from typing import Optional
 import duckdb
 
+
 def flatten(data: dict, prefix: str = "") -> dict:
     """Flatten a dict of dicts into a single dict"""
     flat = {}
@@ -16,12 +17,13 @@ def flatten(data: dict, prefix: str = "") -> dict:
                             nested[k2] = []
                         nested[k2].append(v2)
                 for k2, v2 in nested.items():
-                    flat[prefix + key + "__" + k2] = v2 
+                    flat[prefix + key + "__" + k2] = v2
             else:
                 flat[prefix + key] = value
         else:
             flat[prefix + key] = value
     return flat
+
 
 class Storage:
     def __init__(self, data_dir: Optional[str] = None):
