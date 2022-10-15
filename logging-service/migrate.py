@@ -6,41 +6,9 @@ from typing import List, Dict
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.lib.jsonschema import get_app_defs
 
 working_dir = os.path.dirname(os.path.abspath(__file__))
-
-
-def get_app_defs(json_schema: Dict) -> Dict:
-    tabledefs = {}
-    for path, path_item in json_schema["paths"].items():
-        for method, method_item in path_item.items():
-            if method.lower() == "post":
-                table_name = path.split("/")[-1]
-                schema_path = method_item["requestBody"]["content"]["application/json"][
-                    "schema"
-                ]["$ref"]
-                tabledefs[table_name] = schema_path.split("/")[-1]
-
-    schemas = json_schema["components"]["schemas"]
-
-    # Remove these as they are only for FastAPI's use
-    if "HTTPValidationError" in schemas:
-        del schemas["HTTPValidationError"]
-    if "ValidationError" in schemas:
-        del schemas["ValidationError"]
-
-    schema_deps = {}
-    for schema, schema_config in schemas.items():
-        schema_deps[schema] = set()
-        for field_config in schema_config["properties"].values():
-            if "$ref" in field_config:
-                ref = field_config["$ref"].split("/")[-1]
-                schema_deps[schema].add(ref)
-            elif field_config["type"] == "array":
-                if "$ref" in field_config["items"]:
-                    ref = field_config["items"]["$ref"].split("/")[-1]
-                    schema_deps[schema].add(ref)
-    return {"tables": tabledefs, "schemas": schemas, "schema_deps": schema_deps}
 
 
 def to_primitive_type(config_type: str, array_depth: int) -> str:
