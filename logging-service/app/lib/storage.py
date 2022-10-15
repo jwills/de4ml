@@ -6,19 +6,24 @@ from typing import Optional
 
 
 class Storage:
-    def __init__(self, data_dir: Optional[str] = None):
-        if data_dir is None:
-            self.db = sqlite3.connect(":memory:", check_same_thread=False)
-        else:
-            # TODO: make a file in data dir
-            self.db = sqlite3.connect(data_dir, check_same_thread=False)
+    def __init__(self, tables: Optional[list] = None):
+        self.path = ":memory:"
+        self.tables = tables or []
+        self.db = sqlite3.connect(self.path, check_same_thread=False)
+        for t in self.tables:
+            self.db.execute(f"CREATE TABLE IF NOT EXISTS {t} (ts int, data text)")
         self.lock = threading.Lock()
 
-    def declare(self, table: str):
-        cursor = self.db.cursor()
+    def update(self, new_file_path: str):
+        last_path = self.path
         with self.lock:
-            cursor.execute(f"CREATE TABLE {table} (ts INT, data TEXT)")
-            self.db.commit()
+            if self.db:
+                self.db.close()
+            self.db = sqlite3.connect(new_file_path, check_same_thread=False)
+            for t in self.tables:
+                self.db.execute(f"CREATE TABLE IF NOT EXISTS {t} (ts int, data text)")
+            self.path = new_file_path
+        return last_path
 
     def write(self, table: str, data: str):
         cursor = self.db.cursor()

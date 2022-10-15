@@ -7,9 +7,7 @@ from .lib import contracts, storage
 
 # The FastAPI app instance
 working_dir = os.path.dirname(os.path.abspath(__file__))
-store = storage.Storage()
-store.declare("searches")
-store.declare("clicks")
+store = storage.Storage(["searches", "clicks"])
 app = FastAPI()
 
 
