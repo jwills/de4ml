@@ -23,17 +23,15 @@ def test_searches():
     assert response.status_code == 200
 
     # retrieve the search event and make sure it's logged/typed correctly
-    response = client.get("/sql", params={"q": "SELECT * FROM searches"})
+    response = client.get("/fetch", params={"table": "searches"})
     assert response.status_code == 200
     rows = response.json()
     assert len(rows) == 1
-    assert rows[0]["timestamp_micros"] > 0
+    assert rows[0]["__ts"] > 0
     assert rows[0]["query_id"] == "123"
     assert rows[0]["raw_query"] == "test"
-    assert rows[0]["user__id"] == 1
-    assert rows[0]["results__document_id"] == [1]
-    assert rows[0]["results__position"] == [1]
-    assert rows[0]["results__score"] == [1.0]
+    assert rows[0]["user"] == {"id": 1}
+    assert rows[0]["results"] == [{"document_id": 1, "position": 1, "score": 1.0}]
 
     # Missing query_id
     bad_search_event = {
@@ -54,11 +52,11 @@ def test_clicks():
     assert response.status_code == 200
 
     # retrieve the search event and make sure it's logged/typed correctly
-    response = client.get("/sql", params={"q": "SELECT * FROM clicks"})
+    response = client.get("/fetch", params={"table": "clicks"})
     assert response.status_code == 200
     rows = response.json()
     assert len(rows) == 1
-    assert rows[0]["timestamp_micros"] > 0
+    assert rows[0]["__ts"] > 0
     assert rows[0]["query_id"] == "123"
     assert rows[0]["document_id"] == 1
 
