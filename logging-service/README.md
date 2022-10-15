@@ -16,13 +16,13 @@ and the less impact that it will have on our business.*
 
 There are any number of ways that a logging service could be implemented, depending on what the rest
 of the production stack looked like at the company (e.g., the preferred programming language, schema
-definition tooling, monitoring/observability libraries, deployment models, etc.) The intent of this
+definition tooling, monitoring/observability libraries, deployment models, etc.). The intent of this
 example project is to create a simple service that is comprehensible by a data/ML engineer who is
 comfortable in Python, but who may not have a ton of experience creating backend services.
 
 ## Getting Up and Running
 
-The example here is pure Python and has minimal depenedencies; if you're not comfortable working
+The example here is pure Python and has minimal dependencies; if you're not comfortable working
 with Docker you should be able to get going quickly by creating a Python virtualenv, running
 `pip3 install -r requirements.txt`, and then running `./bin/run.sh` to start the logging service on
 [http://localhost:8080/](http://localhost:8080); you should get back the JSON payload `{"ok": true}`
