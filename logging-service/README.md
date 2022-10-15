@@ -16,7 +16,7 @@ and the less impact that it will have on our business.*
 
 There are any number of ways that a logging service could be implemented, depending on what the rest
 of the production stack looked like at the company (e.g., the preferred programming language, schema
-definition tooling, monitoring/observability libraries, deployment models, etc.) This repo contains
+definition tooling, monitoring/observability libraries, deployment models, etc.). This repo contains
 an implementation of a service that solves all of the problems that you need to solve to do it:
 
 1. It defines an API using [FastAPI](https://fastapi.tiangolo.com/) and [Pydantic](https://pydantic-docs.helpmanual.io/)
@@ -30,7 +30,7 @@ rules and can tell you what is wrong with your input records.
 
 ## Getting Up and Running
 
-The example here is pure Python and has minimal depenedencies; if you're not comfortable working
+The example here is pure Python and has minimal dependencies; if you're not comfortable working
 with Docker you should be able to get going quickly by creating a Python virtualenv, running
 `pip3 install -r requirements.txt`, and then running `./bin/run.sh` to start the logging service on
 [http://localhost:8080/](http://localhost:8080); you should get back the JSON payload `{"ok": true}`
@@ -50,18 +50,18 @@ in order to get things running locally [http://localhost:8080/](http://localhost
 
 1. `app/main.py`: The primary entrypoint for the service, where the API methods are defined
 and we do the work of validating the logged events and persisting them for storage.
-1. `app/lib/storage.py`: Defines the configuration and logic for persisting the records into
+2. `app/lib/storage.py`: Defines the configuration and logic for persisting the records into
 a database- for demo purposes, we're simply inserting the denormalized records into [DuckDB](http://duckdb.org)
 running in-process and persisting the records to a file on disk so that they can be exported as
 Parquet files later on by a cronjob.
-1. `app/lib/contracts.py`: Defines the Pydantic models that we are using to define our data
+3. `app/lib/contracts.py`: Defines the Pydantic models that we are using to define our data
 contracts as Python classes that can include rich documentation and complex validation
 logic for ensuring that the events that we receive always pass certain quality checks
 before we persist them to our data infrastructure.
-1. `migrate.py`: The tool that parses the APIs defined by the service and generates the DDL
+4. `migrate.py`: The tool that parses the APIs defined by the service and generates the DDL
 (including both CREATE TABLE and ALTER TABLE statements) necessary for DuckDB to ingest records;
 the generated DDL lives in `app/config/init.sql`.
-1. `test.py`: The unit tests, written using pytest and FastAPI's excellent testing libraries, that
+5. `test.py`: The unit tests, written using pytest and FastAPI's excellent testing libraries, that
 ensures that the records sent to the API are mapped correctly to the tables in DuckDB.
 
 ## Trying It Out
