@@ -3,7 +3,7 @@ from typing import Dict, List
 
 import duckdb
 
-from lib import jsonschema
+from app.lib import jsonschema
 
 
 def etl(sqlite3_db: str, table: str, columns: List[str], json_schema: Dict):
@@ -11,7 +11,7 @@ def etl(sqlite3_db: str, table: str, columns: List[str], json_schema: Dict):
     table_schema = app_defs["tables"][table]
     structure = jsonschema.to_structure(table_schema, app_defs["schemas"])
     ddb = duckdb.connect(":memory:")  # TODO: fix me
-    for ext in ("sqlite_scanner", "json"):
+    for ext in ("sqlite_scanner", "json", "parquet"):
         ddb.install_extension(ext)
         ddb.load_extension(ext)
     ddb.execute(f"CALL sqlite_attach('{sqlite3_db}')")
@@ -26,21 +26,25 @@ def etl(sqlite3_db: str, table: str, columns: List[str], json_schema: Dict):
 
     select = []
     for col in columns:
-        if col in structure:
+        if col in structure.fields:
             select.append(f"d.{col} as {col}")
         else:
+            # create an extractor macro
             pieces = col.split("__")
             expr, ddbt = f"d.{pieces[0]}", structure.fields[pieces[0]]
-            for i in range(1, len(pieces) - 1):
+            for i in range(1, len(pieces)):
                 if isinstance(ddbt, jsonschema.StructType):
                     expr += f".{pieces[i]}"
                     ddbt = ddbt.fields[pieces[i]]
                 elif isinstance(ddbt, jsonschema.ArrayType):
-                    expr = f"list_transform({expr}, x -> x.{pieces[i]})"
+                    macro_name = f"extract_{col}_{i}(x)"
+                    macro = f"CREATE MACRO {macro_name} AS x.{pieces[i]}"
+                    ddb.execute(macro)
+                    expr = f"list_transform({expr}, x -> {macro_name})"
                     ddbt = ddbt.element_type
                 else:
-                    raise Exception(f"Found unknown type {ddbt} for {col}")
-            expr += f".{pieces[-1]}"
+                    expr += f".{pieces[i]}"
+                    ddbt = None
             select.append(f"{expr} as {col}")
 
     gen_parquet = (
