@@ -6,6 +6,11 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
+class Common(BaseModel):
+    """For fields that we would like every recorded event to have."""
+    timestamp_micros: int = Field(default_factory=lambda: int(time.time() * 1e6))
+
+
 class User(BaseModel):
     """Minimalist user identifiers."""
 
@@ -25,7 +30,7 @@ class SearchResult(BaseModel):
     score: float
 
 
-class SearchEvent(BaseModel):
+class SearchEvent(Common):
     """The information we want to keep/analyze about a search event."""
 
     # Information about the user who performed the query.
@@ -42,7 +47,7 @@ class SearchEvent(BaseModel):
     results: Optional[List[SearchResult]]
 
 
-class ClickEvent(BaseModel):
+class ClickEvent(Common):
     """Information we want to record about a user click event."""
 
     # The query_id of the search event that generated this click.

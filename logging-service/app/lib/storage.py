@@ -7,14 +7,15 @@ from typing import Optional
 
 class Storage:
     def __init__(self, tables: Optional[list] = None):
-        self.path = ":memory:"
+        self.path = None
+        self.db = None
         self.tables = tables or []
-        self.db = sqlite3.connect(self.path, check_same_thread=False)
-        for t in self.tables:
-            self.db.execute(f"CREATE TABLE IF NOT EXISTS {t} (ts int, data text)")
         self.lock = threading.Lock()
 
-    def update(self, new_file_path: str):
+    def is_open(self) -> bool:
+        return self.db is not None
+
+    def open(self, new_file_path: str):
         last_path = self.path
         with self.lock:
             if self.db:
@@ -26,9 +27,8 @@ class Storage:
         return last_path
 
     def write(self, table: str, data: str):
-        cursor = self.db.cursor()
         with self.lock:
-            cursor.execute(
+            self.db.execute(
                 f"INSERT INTO {table} (ts, data) VALUES (?, ?)",
                 (int(time.time() * 1e6), data),
             )
@@ -37,9 +37,7 @@ class Storage:
     def fetch(self, table: str, limit: int = 10):
         rows = []
         with self.lock:
-            cursor = self.db.cursor().execute(
-                f"SELECT ts, data FROM {table} LIMIT {limit}"
-            )
+            cursor = self.db.execute(f"SELECT ts, data FROM {table} LIMIT {limit}")
             rows = cursor.fetchall()
         ret = []
         for row in rows:

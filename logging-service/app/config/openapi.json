@@ -79,19 +79,29 @@
                 }
             }
         },
-        "/sql": {
+        "/fetch": {
             "get": {
                 "summary": "Fetch",
                 "description": "Retrieves recently logged entries from the storage engine, useful for debugging.",
-                "operationId": "fetch_sql_get",
+                "operationId": "fetch_fetch_get",
                 "parameters": [
                     {
                         "required": true,
                         "schema": {
-                            "title": "Q",
+                            "title": "Table",
                             "type": "string"
                         },
-                        "name": "q",
+                        "name": "table",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Limit",
+                            "type": "integer",
+                            "default": 10
+                        },
+                        "name": "limit",
                         "in": "query"
                     }
                 ],
@@ -101,7 +111,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "title": "Response Fetch Sql Get",
+                                    "title": "Response Fetch Fetch Get",
                                     "type": "array",
                                     "items": {
                                         "type": "object"
@@ -151,10 +161,6 @@
                 ],
                 "type": "object",
                 "properties": {
-                    "timestamp_micros": {
-                        "title": "Timestamp Micros",
-                        "type": "integer"
-                    },
                     "query_id": {
                         "title": "Query Id",
                         "type": "string"
@@ -175,10 +181,6 @@
                 ],
                 "type": "object",
                 "properties": {
-                    "timestamp_micros": {
-                        "title": "Timestamp Micros",
-                        "type": "integer"
-                    },
                     "user": {
                         "$ref": "#/components/schemas/User"
                     },
