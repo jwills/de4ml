@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 
 class DuckDBType:
@@ -38,13 +38,22 @@ class PrimitiveType(DuckDBType):
 
 
 class AppDefs:
+    @classmethod
+    def get_current(cls) -> Optional["AppDefs"]:
+        working_dir = os.path.dirname(os.path.realpath(__file__))
+        openapi_path = os.path.join(working_dir, "/../config/openapi.json")
+        if os.path.exists(openapi_path):
+            with open(openapi_path) as f:
+                json_schema = json.load(f)
+                return cls.from_json_schema(json_schema)
+        else:
+            return AppDefs({}, {}, {})
 
     @classmethod
-    def current(cls):
+    def save_as_current(cls, json_schema: Dict):
         working_dir = os.path.dirname(os.path.realpath(__file__))
-        with open(f"{working_dir}/../config/openapi.json") as f:
-            json_schema = json.load(f)
-            return cls.from_json_schema(json_schema)
+        with open(f"{working_dir}/../config/openapi.json", "w") as f:
+            json.dump(json_schema, f, indent=4)
 
     @classmethod
     def from_json_schema(cls, json_schema: Dict) -> "AppDefs":

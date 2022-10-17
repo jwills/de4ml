@@ -1,5 +1,6 @@
 import os
-from typing import Dict, List
+import pathlib
+from typing import List
 
 import duckdb
 
@@ -12,9 +13,10 @@ def _columns_helper(table: str) -> List[str]:
         return f.read().splitlines()
 
 
-def etl(sqlite3_db: str, table: str, output_dir: str):
+def etl(
+    sqlite3_db: str, table: str, app_defs: AppDefs, output_dir: pathlib.Path
+) -> pathlib.Path:
     """ETLs the data from the SQLite3 database into DuckDB."""
-    app_defs = AppDefs.current()
     structure = app_defs.to_structure(app_defs.get_schema_name(table))
     ddb = duckdb.connect(":memory:")  # TODO: fix me
     for ext in ("sqlite_scanner", "json", "parquet"):
@@ -54,8 +56,9 @@ def etl(sqlite3_db: str, table: str, output_dir: str):
                     ddbt = None
             select.append(f"{expr} as {col}")
 
-    output_file = f"{output_dir}/{table}.parquet"
+    output_file = output_dir / f"{table}.parquet"
     ddb.execute(
         f"COPY (SELECT {', '.join(select)} FROM {table}_parsed) TO '{output_file}'"
     )
     ddb.close()
+    return output_file

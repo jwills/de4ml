@@ -1,11 +1,10 @@
 import graphlib
-import json
 import os
 from typing import List, Dict
 
 from fastapi.testclient import TestClient
 
-from app.main import app
+from app.api import app
 from app.lib.jsonschema import AppDefs
 
 working_dir = os.path.dirname(os.path.abspath(__file__))
@@ -34,16 +33,16 @@ def main():
     client = TestClient(app)
     json_schema = client.get("/openapi.json").json()
     app_defs = AppDefs.from_json_schema(json_schema)
-    existing_app_defs = AppDefs.current()
+    existing_app_defs = AppDefs.get_current()
 
     schema_diffs = {}
     # We need to walk the schemas in topological sort order so that
     # we can be sure that the diffs account for dependencies between the
     # schemas
-    for s in graphlib.TopologicalSorter(app_defs["schema_deps"]).static_order():
+    for s in graphlib.TopologicalSorter(app_defs.schema_deps).static_order():
         if s in existing_app_defs.schemas:
             existing_schema = existing_app_defs.schemas[s]
-            new_schema = app_defs["schemas"][s]
+            new_schema = app_defs.schemas[s]
             schema_diffs[s] = {"properties": {}}
             for field, config in new_schema["properties"].items():
                 if field not in existing_schema["properties"]:
@@ -61,9 +60,7 @@ def main():
         table_schema = app_defs.get_schema_name(t)
         columns, write_mode = [], "w"
         if t not in existing_app_defs.tables:
-            columns = gen_columns(
-                app_defs["schemas"][table_schema], app_defs["schemas"]
-            )
+            columns = gen_columns(app_defs.schemas[table_schema], app_defs.schemas)
         elif len(schema_diffs[table_schema]["properties"]) > 0:
             columns = gen_columns(schema_diffs[table_schema], schema_diffs)
             write_mode = "a"
@@ -73,8 +70,7 @@ def main():
                 f.write("\n")
 
     # Finally, write the openapi.json file
-    with open(openapi_file, "w") as f:
-        json.dump(json_schema, f, indent=4)
+    AppDefs.save_as_current(json_schema)
 
 
 if __name__ == "__main__":

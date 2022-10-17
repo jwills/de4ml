@@ -1,4 +1,5 @@
 duckdb
 fastapi[all]
 pytest
+pytest-mock
 requests

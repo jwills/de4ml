@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 class Common(BaseModel):
     """For fields that we would like every recorded event to have."""
+
     timestamp_micros: int = Field(default_factory=lambda: int(time.time() * 1e6))
 
 

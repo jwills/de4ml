@@ -1,30 +1,41 @@
 import json
+import os
+import pathlib
+import socket
 import sqlite3
 import threading
 import time
-from typing import Optional
+from typing import List
+
+
+def _get_db_filename() -> str:
+    return f"{socket.gethostname()}_{int(time.time() * 1e6)}.db"
 
 
 class Storage:
-    def __init__(self, tables: Optional[list] = None):
-        self.path = None
-        self.db = None
-        self.tables = tables or []
+    _instance = None
+
+    @classmethod
+    def get(cls) -> "Storage":
+        if not cls._instance:
+            data_dir = pathlib.Path(os.getenv("DATA_DIR", "/tmp"))
+            tables = os.getenv("TABLES", "searches,clicks").split(",")
+            cls._instance = cls(data_dir, tables)
+        return cls._instance
+
+    def __init__(self, data_dir: pathlib.Path, tables: List[str]):
+        self.path = data_dir / _get_db_filename()
+        self.db = sqlite3.connect(self.path, check_same_thread=False)
+        self.tables = tables
+        for t in tables:
+            self.db.execute(f"CREATE TABLE IF NOT EXISTS {t} (ts int, data text)")
         self.lock = threading.Lock()
 
-    def is_open(self) -> bool:
-        return self.db is not None
-
-    def open(self, new_file_path: str):
-        last_path = self.path
+    def close(self) -> str:
         with self.lock:
-            if self.db:
-                self.db.close()
-            self.db = sqlite3.connect(new_file_path, check_same_thread=False)
-            for t in self.tables:
-                self.db.execute(f"CREATE TABLE IF NOT EXISTS {t} (ts int, data text)")
-            self.path = new_file_path
-        return last_path
+            self.db.close()
+            self._instance = None
+        return self.path
 
     def write(self, table: str, data: str):
         with self.lock:
