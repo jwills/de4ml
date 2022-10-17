@@ -46,15 +46,6 @@ def test_searches(client, storage, tmp_path):
     assert rows[0]["user"] == {"id": 1}
     assert rows[0]["results"] == [{"document_id": 1, "position": 1, "score": 1.0}]
 
-    # Missing query_id, verify it isn't logged
-    bad_search_event = {
-        "user": {"id": 1},
-        "raw_query": "test",
-        "results": [{"document_id": 1, "position": 1, "score": 1.0}],
-    }
-    response = client.post("/searches", json=bad_search_event)
-    assert response.status_code == 422
-
     # Close up the DB and run the ETL pipeline for the searches table
     output_path = storage.close()
     parquet_file = etl.etl(output_path, "searches", app_defs, tmp_path)
@@ -72,3 +63,14 @@ def test_searches(client, storage, tmp_path):
     assert payload["results__document_id"] == [1]
     assert payload["results__position"] == [1]
     assert payload["results__score"] == [1.0]
+
+
+def test_bad_search(client):
+    # Missing query_id, verify it doesn't pass validation
+    bad_search_event = {
+        "user": {"id": 1},
+        "raw_query": "test",
+        "results": [{"document_id": 1, "position": 1, "score": 1.0}],
+    }
+    response = client.post("/searches", json=bad_search_event)
+    assert response.status_code == 422
