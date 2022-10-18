@@ -10,6 +10,7 @@ __pycache__
 .history
 .pytest_cache
 *.pyc
+*.parquet
 .coverage
 results
 coverage.xml

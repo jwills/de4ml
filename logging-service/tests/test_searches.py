@@ -1,17 +1,17 @@
+import pathlib
 import pytest
 
 import duckdb
 from fastapi.testclient import TestClient
 
-from app.lib import etl
+from app import api, etl
 from app.lib.jsonschema import AppDefs
 from app.lib.storage import Storage
-from app.api import app
 
 
 @pytest.fixture
 def client():
-    with TestClient(app) as client:
+    with TestClient(api.app) as client:
         yield client
 
 
@@ -47,9 +47,11 @@ def test_searches(client, storage, tmp_path):
     assert rows[0]["results"] == [{"document_id": 1, "position": 1, "score": 1.0}]
 
     # Close up the DB and run the ETL pipeline for the searches table
-    output_path = storage.close()
+    output_path = pathlib.Path(storage.close())
     parquet_file = etl.etl(output_path, "searches", app_defs, tmp_path)
 
+    # Verify the ETL pipeline output is a valid parquet file and its contents
+    # match our expectations
     conn = duckdb.connect()
     conn.install_extension("parquet")
     conn.load_extension("parquet")
@@ -63,6 +65,7 @@ def test_searches(client, storage, tmp_path):
     assert payload["results__document_id"] == [1]
     assert payload["results__position"] == [1]
     assert payload["results__score"] == [1.0]
+    conn.close()
 
 
 def test_bad_search(client):

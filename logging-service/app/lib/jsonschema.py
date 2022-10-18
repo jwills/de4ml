@@ -41,7 +41,7 @@ class AppDefs:
     @classmethod
     def get_current(cls) -> Optional["AppDefs"]:
         working_dir = os.path.dirname(os.path.realpath(__file__))
-        openapi_path = os.path.join(working_dir, "/../config/openapi.json")
+        openapi_path = f"{working_dir}/../config/openapi.json"
         if os.path.exists(openapi_path):
             with open(openapi_path) as f:
                 json_schema = json.load(f)

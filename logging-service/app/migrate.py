@@ -60,16 +60,19 @@ def main():
         table_schema = app_defs.get_schema_name(t)
         columns, write_mode = [], "w"
         if t not in existing_app_defs.tables:
+            # write a new table
             columns = gen_columns(app_defs.schemas[table_schema], app_defs.schemas)
         elif len(schema_diffs[table_schema]["properties"]) > 0:
+            # add columns to an existing table
             columns = gen_columns(schema_diffs[table_schema], schema_diffs)
             write_mode = "a"
         if columns:
-            with open(working_dir + f"/app/config/{t}_columns.csv", write_mode) as f:
+            with open(working_dir + f"/config/{t}_columns.csv", write_mode) as f:
                 f.write("\n".join(columns))
                 f.write("\n")
 
-    # Finally, write the openapi.json file
+    # Finally, write the new schema to the openapi.json file to record the current
+    # version of things
     AppDefs.save_as_current(json_schema)
 
 
