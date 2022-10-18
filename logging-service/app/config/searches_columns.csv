@@ -1,0 +1,7 @@
+timestamp_micros
+user__id
+query_id
+raw_query
+results__document_id
+results__position
+results__score

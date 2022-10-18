@@ -1,56 +1,58 @@
-from typing import Optional
-import duckdb
+import json
+import os
+import pathlib
+import socket
+import sqlite3
+import threading
+import time
+from typing import List
 
 
-def flatten(data: dict, prefix: str = "") -> dict:
-    """Flatten a dict of dicts into a single dict"""
-    flat = {}
-    for key, value in data.items():
-        if isinstance(value, dict):
-            flat.update(flatten(value, prefix + key + "__"))
-        elif isinstance(value, list):
-            if len(value) > 0 and isinstance(value[0], dict):
-                nested = {}
-                for item in value:
-                    for k2, v2 in item.items():
-                        if k2 not in nested:
-                            nested[k2] = []
-                        nested[k2].append(v2)
-                for k2, v2 in nested.items():
-                    flat[prefix + key + "__" + k2] = v2
-            else:
-                flat[prefix + key] = value
-        else:
-            flat[prefix + key] = value
-    return flat
+def _get_db_filename() -> str:
+    return f"{socket.gethostname()}_{int(time.time() * 1e6)}.db"
 
 
 class Storage:
-    def __init__(self, data_dir: Optional[str] = None):
-        if data_dir is None:
-            self.db = duckdb.connect()
-        else:
-            # TODO: make a file in data dir
-            self.db = duckdb.connect(data_dir)
+    _instance = None
 
-    def intialize(self, init_sql_file: str):
-        with open(init_sql_file, "r") as f:
-            self.db.execute(f.read())
+    @classmethod
+    def get(cls) -> "Storage":
+        if not cls._instance:
+            data_dir = pathlib.Path(os.getenv("DATA_DIR", "/tmp"))
+            tables = os.getenv("TABLES", "searches,clicks").split(",")
+            cls._instance = cls(data_dir, tables)
+        return cls._instance
 
-    def write(self, table: str, data: dict):
-        fields, values = [], []
-        for k, v in flatten(data).items():
-            fields.append(k)
-            values.append(v)
-        sql = f"INSERT INTO {table} ({','.join(fields)}) VALUES ({','.join(['?'] * len(values))})"
-        cursor = self.db.cursor()
-        cursor.execute(sql, values)
-        cursor.close()
+    def __init__(self, data_dir: pathlib.Path, tables: List[str]):
+        self.path = data_dir / _get_db_filename()
+        self.db = sqlite3.connect(self.path, check_same_thread=False)
+        self.tables = tables
+        for t in tables:
+            self.db.execute(f"CREATE TABLE IF NOT EXISTS {t} (ts int, data text)")
+        self.lock = threading.Lock()
 
-    def query(self, q: str):
-        cursor = self.db.cursor().execute(q)
-        column_names = [d[0] for d in cursor.description]
+    def close(self) -> str:
+        with self.lock:
+            self.db.close()
+            self._instance = None
+        return self.path
+
+    def write(self, table: str, data: str):
+        with self.lock:
+            self.db.execute(
+                f"INSERT INTO {table} (ts, data) VALUES (?, ?)",
+                (int(time.time() * 1e6), data),
+            )
+            self.db.commit()
+
+    def fetch(self, table: str, limit: int = 10):
+        rows = []
+        with self.lock:
+            cursor = self.db.execute(f"SELECT ts, data FROM {table} LIMIT {limit}")
+            rows = cursor.fetchall()
         ret = []
-        for row in cursor.fetchall():
-            ret.append(dict(zip(column_names, row)))
+        for row in rows:
+            data = json.loads(row[1])
+            data["__ts"] = row[0]
+            ret.append(data)
         return ret

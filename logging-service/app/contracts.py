@@ -7,8 +7,8 @@ from pydantic import BaseModel, Field
 
 
 class Common(BaseModel):
-    """The common model provides universal fields for all logged events."""
-    # The timestamp of when this log event was created in microseconds.
+    """For fields that we would like every recorded event to have."""
+
     timestamp_micros: int = Field(default_factory=lambda: int(time.time() * 1e6))
 
 
