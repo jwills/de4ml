@@ -49,23 +49,28 @@ dependencies for the app. Then you can run `./bin/serve.sh` to start the logging
 on [http://localhost:8080/](http://localhost:8080); you should get back the JSON payload `{"ok": true}`
 if everything has started up correctly.
 
-You can test out logging some simple search events using the [/docs](http://localhost:8080/docs) endpoint
-and then using the `/fetch` endpoint to retrive the logged records from SQLite, which will be kept in
-a database in your `/tmp/` directory that should contain both your hostname and a timestamp in microseconds of when the service started up. After you are finished logging events, you can shut the service
-down (Ctrl-C will do it for you) and then use the `bin/etl.sh` script to transform the JSON records for the `/searches` endpoint that were stored in the SQLite database into Parquet files by running:
+You can test out writing and reading some simple search events using either the `curl` commands below or the [/docs](http://localhost:8080/docs) 
+endpoint on the logging service:
 
 ```
-bin/etl.sh /tmp/<hostname_timestamp>.db searches ./
+curl -X POST -H "Content-Type: application/json" -d '{"user": {"id": 1}, "query_id": "test", "raw_query": "dbt", "results": []}' http://localhost:8080/searches
+curl "http://localhost:8080/fetch?table=searches"
+```
+
+The service stores the JSON payloads in a database in a file in your `/tmp/` directory that starts with "logging_service_" and ends with the timestamp in microseconds of when the service started up.
+After you are finished logging events, you can shut the service down ((Ctrl-C will do it for you) and then use the `bin/etl.sh` script to transform the JSON records for the `/searches` endpoint
+that were stored in the SQLite database into Parquet files by running:
+
+```
+bin/etl.sh /tmp/logging_service_*.db searches ./
 ```
 
 After this command runs, you should see a `searches.parquet` file in the current directory, which
-you can read using DuckDB, either with its CLI or in the Python one:
+you can work with using your preferred data tools or simply print the column names and rows in the
+file to stdout using the `pcat.sh` script:
 
 ```
-import duckdb
-conn = duckdb.connect()
-conn.load_extension('parquet')
-conn.execute("SELECT * FROM 'searches.parquet'").fetchall()
+bin/pcat.sh ./searches.parquet
 ```
 
 ## Understanding the Code

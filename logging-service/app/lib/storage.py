@@ -9,7 +9,7 @@ from typing import List
 
 
 def _get_db_filename() -> str:
-    return f"{socket.gethostname()}_{int(time.time() * 1e6)}.db"
+    return f"logging_service_{int(time.time() * 1e6)}.db"
 
 
 class Storage:
