@@ -1,1 +1,1 @@
-python3 app/migrate.py
+PYTHONPATH=. python3 app/migrate.py
