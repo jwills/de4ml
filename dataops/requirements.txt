@@ -1,0 +1,6 @@
+datamodel-code-generator
+duckdb
+fastapi[all]
+locust
+prometheus-fastapi-instrumentator
+river
