@@ -1,6 +1,6 @@
 from typing import Dict, List
 
-from fastapi import BackgroundTasks, FastAPI
+from fastapi import FastAPI
 
 from . import contracts
 from .lib.storage import Storage
@@ -10,14 +10,14 @@ app = FastAPI()
 
 
 @app.post("/searches")
-def log_search_event(body: contracts.SearchEvent, background_tasks: BackgroundTasks):
+def log_search_event(body: contracts.SearchEvent):
     """Validates and persists a search log record to permanent storage."""
     Storage.get().write("searches", body.json())
     return {"ok": True}
 
 
 @app.post("/clicks")
-def log_click_event(body: contracts.ClickEvent, background_tasks: BackgroundTasks):
+def log_click_event(body: contracts.ClickEvent):
     """Validates and persists a click log record to permanent storage."""
     Storage.get().write("clicks", body.json())
     return {"ok": True}
